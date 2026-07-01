@@ -1,6 +1,6 @@
-# GitHub Talent Hunt
+# GitHub smart minds
 
-This project finds GitHub users who match a job description.
+This project finds GitHub users who match a job description or intrest.
 It can use a fast heuristic or an AI model if configured.
 
 ## What is included
@@ -38,11 +38,6 @@ It can use a fast heuristic or an AI model if configured.
    http://127.0.0.1:8000
    ```
 
-## Notes
-
-- Do not commit `.env` to GitHub.
-- The repository includes `.gitignore` to keep secrets and generated files out of git.
-- If you do not set `OPENAI_API_KEY`, the app will use a heuristic fallback.
 
 ## How to use
 
