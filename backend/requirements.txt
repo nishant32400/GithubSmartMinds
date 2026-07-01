@@ -1,0 +1,15 @@
+# --- Core web framework ---
+Flask==3.0.3
+gunicorn==22.0.0
+Flask-Limiter==3.8.0
+
+# --- HTTP / config ---
+requests==2.32.3
+python-dotenv==1.0.1
+
+# --- LLM providers (optional at runtime; app degrades to heuristic if unset) ---
+openai==1.51.2
+boto3==1.35.36
+
+# --- Reporting ---
+reportlab==4.2.2

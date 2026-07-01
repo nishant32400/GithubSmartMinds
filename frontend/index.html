@@ -1,0 +1,243 @@
+index.html:
+<!doctype html>
+<html lang="en">
+ <head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <title>GitHub FutureScape</title>
+ <style>
+ :root {
+ color-scheme: dark;
+ --bg: #050814;
+ --surface: rgba(12, 19, 42, 0.85);
+ --border: rgba(120, 170, 255, 0.25);
+ --text: #e8f5ff;
+ --muted: #97b4d9;
+ --accent: #77d6ff;
+ --accent-2: #7b5cff;
+ }
+
+ * {
+ box-sizing: border-box;
+ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0%200%2048%2048'><path d='M4,24h28l5,-8-4,-4H10l-5,12z' fill='%23ffffff'/><circle cx='14' cy='32' r='4' fill='%230084ff'/><circle cx='28' cy='32' r='4' fill='%230084ff'/><path d='M34,20c2,0,5,1,7,3s3,6,1,8' stroke='%23c4eeff' stroke-width='3' fill='none'/><path d='M30,16c1,-2,4,-3,7,-2' stroke='%23c4eeff' stroke-width='3' fill='none'/></svg>") 16 16, auto;
+ }
+
+ html, body {
+ margin: 0;
+ min-height: 100%;
+ font-family: 'Inter', system-ui, sans-serif;
+ background: radial-gradient(circle at top, rgba(107, 181, 255, 0.12), transparent 18%),
+ linear-gradient(180deg, #08121f 0%, #02040d 55%, #02040d 100%);
+ color: var(--text);
+ }
+
+ body::before {
+ content: '';
+ position: fixed;
+ inset: 0;
+ background-image: radial-gradient(circle at 15% 20%, rgba(119, 214, 255, 0.3), transparent 14%),
+ radial-gradient(circle at 75% 10%, rgba(255, 255, 255, 0.12), transparent 10%),
+ radial-gradient(circle at 30% 70%, rgba(119, 214, 255, 0.14), transparent 8%);
+ opacity: 0.65;
+ pointer-events: none;
+ }
+
+ .container {
+ max-width: 980px;
+ margin: 0 auto;
+ padding: 40px 28px 60px;
+ }
+
+ .hero {
+ display: grid;
+ gap: 22px;
+ margin-bottom: 32px;
+ }
+
+ .eyebrow {
+ text-transform: uppercase;
+ letter-spacing: 0.22em;
+ font-size: 0.78rem;
+ color: var(--accent);
+ margin: 0 0 6px;
+ }
+
+ h1 {
+ margin: 0;
+ font-size: clamp(2.6rem, 4vw, 5rem);
+ letter-spacing: -0.04em;
+ line-height: 1.02;
+ }
+
+ p.lead {
+ margin: 0;
+ max-width: 680px;
+ color: var(--muted);
+ font-size: 1rem;
+ line-height: 1.8;
+ }
+
+ .panel {
+ background: var(--surface);
+ border: 1px solid var(--border);
+ border-radius: 28px;
+ box-shadow: 0 24px 120px rgba(0, 0, 0, 0.18);
+ backdrop-filter: blur(22px);
+ padding: 32px;
+ }
+
+ label {
+ display: block;
+ margin-bottom: 10px;
+ color: var(--muted);
+ font-size: 0.95rem;
+ }
+
+ textarea,
+ input[type='text'],
+ input[type='number'] {
+ width: 100%;
+ border: 1px solid rgba(118, 177, 255, 0.16);
+ border-radius: 18px;
+ background: rgba(7, 14, 29, 0.95);
+ color: var(--text);
+ font-size: 1rem;
+ padding: 18px 18px;
+ outline: none;
+ transition: border-color 0.2s ease, box-shadow 0.2s ease;
+ }
+
+ textarea {
+ min-height: 160px;
+ resize: vertical;
+ }
+
+ textarea:focus,
+ input:focus {
+ border-color: rgba(119, 214, 255, 0.5);
+ box-shadow: 0 0 0 4px rgba(119, 214, 255, 0.08);
+ }
+
+ .field-grid {
+ display: grid;
+ gap: 18px;
+ }
+
+ .field-grid .half {
+ min-width: 0;
+ }
+
+ .field-grid.two {
+ grid-template-columns: 1fr 1fr;
+ }
+
+ .btn {
+ display: inline-flex;
+ align-items: center;
+ justify-content: center;
+ gap: 10px;
+ padding: 16px 26px;
+ border: none;
+ border-radius: 999px;
+ background: linear-gradient(135deg, #58c2ff 0%, #7b5cff 100%);
+ color: #06152d;
+ font-weight: 700;
+ font-size: 1rem;
+ cursor: pointer;
+ box-shadow: 0 18px 40px rgba(95, 164, 255, 0.22);
+ transition: transform 0.2s ease, box-shadow 0.2s ease;
+ }
+
+ .btn:hover {
+ transform: translateY(-1px);
+ box-shadow: 0 24px 60px rgba(95, 164, 255, 0.3);
+ }
+
+ .note {
+ margin-top: 24px;
+ color: var(--muted);
+ font-size: 0.95rem;
+ line-height: 1.7;
+ }
+
+ .footer {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ gap: 12px;
+ margin-top: 20px;
+ color: var(--muted);
+ font-size: 0.95rem;
+ }
+
+ .chip {
+ display: inline-flex;
+ padding: 12px 18px;
+ border-radius: 999px;
+ background: rgba(47, 86, 196, 0.14);
+ border: 1px solid rgba(119, 214, 255, 0.18);
+ color: #9ed9ff;
+ font-size: 0.85rem;
+ }
+
+ @media (max-width: 720px) {
+ .field-grid.two {
+ grid-template-columns: 1fr;
+ }
+ }
+ </style>
+ </head>
+ <body>
+ <div class="container">
+ <section class="hero">
+ <div>
+ <p class="eyebrow">Candidate search</p>
+ <h1>GitHub FutureScape</h1>
+ <p class="lead">An LLM-powered talent-hunt agent that reads your job description, plans a focused GitHub search, and evaluates each developer's public work with AI reasoning — with a fast heuristic fallback when no model is configured.</p>
+ </div>
+ <div class="chip">AI agent</div>
+ </section>
+
+ {% if error %}
+ <div class="panel" style="border-color:#ff7b7b;background:rgba(69,19,26,0.82);color:#ffe3e6;">
+ {{ error }}
+ </div>
+ {% endif %}
+
+ <form method="post" action="/search" class="panel">
+ <div class="field-grid" style="margin-bottom:24px;">
+ <div>
+ <label><strong>Job requirements / keywords</strong></label>
+ <textarea name="query" placeholder="e.g. Python backend Django REST API" required>{{ request.form.query or '' }}</textarea>
+ </div>
+ </div>
+
+ <div class="field-grid two" style="margin-bottom:24px;">
+ <div class="half">
+ <label>Location (optional)</label>
+ <input type="text" name="location" placeholder="e.g. Berlin, Germany" value="{{ request.form.location or '' }}">
+ </div>
+ <div class="half">
+ <label>Max results to show</label>
+ <input type="number" name="max_results" value="10" min="1" max="100">
+ </div>
+ </div>
+
+ <div class="field-grid two" style="margin-bottom:24px;">
+ <div class="half">
+ <label>Search size (how many GitHub users to scan)</label>
+ <input type="number" name="search_size" value="100" min="10" max="1000">
+ </div>
+ <div class="half" style="display:flex;flex-direction:column;justify-content:flex-end;">
+ <button class="btn" type="submit">Search GitHub</button>
+ </div>
+ </div>
+
+ <div class="footer">
+ <span>Hover over results for instant ranking insight.</span>
+ <span>Tip: Add a valid GITHUB_TOKEN in <code>.env</code> for faster API access.</span>
+ </div>
+ </form>
+ </div>
+ </body>
+</html>
