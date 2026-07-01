@@ -1,0 +1,29 @@
+# Python compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# Environment files
+*.env
+.env
+
+# macOS files
+.DS_Store
+
+# Editor files
+*.swp
+*~
+.idea/
+.vscode/
+
+# Packaging
+*.egg-info/
+dist/
+build/
