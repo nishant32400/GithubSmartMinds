@@ -1,243 +1,528 @@
-index.html:
 <!doctype html>
 <html lang="en">
- <head>
- <meta charset="utf-8">
- <meta name="viewport" content="width=device-width, initial-scale=1">
- <title>GitHub FutureScape</title>
- <style>
- :root {
- color-scheme: dark;
- --bg: #050814;
- --surface: rgba(12, 19, 42, 0.85);
- --border: rgba(120, 170, 255, 0.25);
- --text: #e8f5ff;
- --muted: #97b4d9;
- --accent: #77d6ff;
- --accent-2: #7b5cff;
- }
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GitHub GITRadar</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f4f2;
+        --bg-2: #ffffff;
+        --ink: #0c0d12;
+        --ink-soft: #4a4d5a;
+        --muted: #8a8d99;
+        --line: rgba(12, 13, 18, 0.08);
+        --line-strong: rgba(12, 13, 18, 0.14);
+        --accent: #5b4bff;
+        --accent-2: #b14bff;
+        --glass: rgba(255, 255, 255, 0.6);
+        --shadow: 0 30px 80px -30px rgba(20, 20, 45, 0.28);
+        --r: 26px;
+        --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      }
 
- * {
- box-sizing: border-box;
- cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0%200%2048%2048'><path d='M4,24h28l5,-8-4,-4H10l-5,12z' fill='%23ffffff'/><circle cx='14' cy='32' r='4' fill='%230084ff'/><circle cx='28' cy='32' r='4' fill='%230084ff'/><path d='M34,20c2,0,5,1,7,3s3,6,1,8' stroke='%23c4eeff' stroke-width='3' fill='none'/><path d='M30,16c1,-2,4,-3,7,-2' stroke='%23c4eeff' stroke-width='3' fill='none'/></svg>") 16 16, auto;
- }
+      * { box-sizing: border-box; }
 
- html, body {
- margin: 0;
- min-height: 100%;
- font-family: 'Inter', system-ui, sans-serif;
- background: radial-gradient(circle at top, rgba(107, 181, 255, 0.12), transparent 18%),
- linear-gradient(180deg, #08121f 0%, #02040d 55%, #02040d 100%);
- color: var(--text);
- }
+      html { scroll-behavior: smooth; }
 
- body::before {
- content: '';
- position: fixed;
- inset: 0;
- background-image: radial-gradient(circle at 15% 20%, rgba(119, 214, 255, 0.3), transparent 14%),
- radial-gradient(circle at 75% 10%, rgba(255, 255, 255, 0.12), transparent 10%),
- radial-gradient(circle at 30% 70%, rgba(119, 214, 255, 0.14), transparent 8%);
- opacity: 0.65;
- pointer-events: none;
- }
+      body {
+        margin: 0;
+        min-height: 100%;
+        font-family: var(--font);
+        color: var(--ink);
+        background: var(--bg);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        overflow-x: hidden;
+      }
 
- .container {
- max-width: 980px;
- margin: 0 auto;
- padding: 40px 28px 60px;
- }
+      /* Ambient aurora — soft, static, premium */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: -20vmax;
+        z-index: 0;
+        background:
+          radial-gradient(38vmax 38vmax at 12% -8%, rgba(91, 75, 255, 0.16), transparent 60%),
+          radial-gradient(34vmax 34vmax at 92% 4%, rgba(177, 75, 255, 0.12), transparent 60%),
+          radial-gradient(40vmax 40vmax at 78% 92%, rgba(75, 200, 255, 0.10), transparent 62%);
+        filter: saturate(1.05);
+        pointer-events: none;
+      }
 
- .hero {
- display: grid;
- gap: 22px;
- margin-bottom: 32px;
- }
+      .wrap {
+        position: relative;
+        z-index: 1;
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 0 32px;
+      }
 
- .eyebrow {
- text-transform: uppercase;
- letter-spacing: 0.22em;
- font-size: 0.78rem;
- color: var(--accent);
- margin: 0 0 6px;
- }
+      /* ---------- NAV ---------- */
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 30px 0 10px;
+      }
+      .brand {
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand .dot {
+        width: 11px; height: 11px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        box-shadow: 0 0 0 4px rgba(91, 75, 255, 0.12);
+      }
+      .nav .pill {
+        font-size: 0.82rem;
+        color: var(--ink-soft);
+        border: 1px solid var(--line-strong);
+        padding: 9px 16px;
+        border-radius: 999px;
+        background: var(--glass);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+      }
 
- h1 {
- margin: 0;
- font-size: clamp(2.6rem, 4vw, 5rem);
- letter-spacing: -0.04em;
- line-height: 1.02;
- }
+      /* ---------- HERO ---------- */
+      .hero {
+        padding: 9vh 0 7vh;
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.28em;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--accent);
+        margin: 0 0 26px;
+      }
+      .eyebrow::before {
+        content: '';
+        width: 26px; height: 1px;
+        background: linear-gradient(90deg, var(--accent), transparent);
+      }
+      h1.title {
+        margin: 0;
+        font-size: clamp(3rem, 9vw, 7.4rem);
+        line-height: 0.94;
+        letter-spacing: -0.05em;
+        font-weight: 800;
+      }
+      h1.title .grad {
+        background: linear-gradient(115deg, var(--accent) 10%, var(--accent-2) 90%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      p.lead {
+        margin: 34px 0 0;
+        max-width: 620px;
+        color: var(--ink-soft);
+        font-size: clamp(1.05rem, 1.6vw, 1.28rem);
+        line-height: 1.65;
+        font-weight: 400;
+      }
+      .scroll-cue {
+        margin-top: 56px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 0.82rem;
+        letter-spacing: 0.04em;
+      }
+      .scroll-cue .track {
+        width: 26px; height: 42px;
+        border: 1.5px solid var(--line-strong);
+        border-radius: 14px;
+        position: relative;
+      }
+      .scroll-cue .track::after {
+        content: '';
+        position: absolute;
+        left: 50%; top: 8px;
+        width: 4px; height: 8px;
+        margin-left: -2px;
+        border-radius: 4px;
+        background: var(--accent);
+        animation: cue 1.8s ease-in-out infinite;
+      }
+      @keyframes cue { 0%,100% { transform: translateY(0); opacity: 1 } 60% { transform: translateY(12px); opacity: 0.2 } }
 
- p.lead {
- margin: 0;
- max-width: 680px;
- color: var(--muted);
- font-size: 1rem;
- line-height: 1.8;
- }
+      /* ---------- BENTO ---------- */
+      .section-label {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 20px;
+        margin: 12vh 0 34px;
+        flex-wrap: wrap;
+      }
+      .section-label h2 {
+        margin: 0;
+        font-size: clamp(1.7rem, 3.4vw, 2.9rem);
+        letter-spacing: -0.035em;
+        font-weight: 700;
+        max-width: 640px;
+        line-height: 1.05;
+      }
+      .section-label p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+        max-width: 300px;
+      }
 
- .panel {
- background: var(--surface);
- border: 1px solid var(--border);
- border-radius: 28px;
- box-shadow: 0 24px 120px rgba(0, 0, 0, 0.18);
- backdrop-filter: blur(22px);
- padding: 32px;
- }
+      .bento {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        grid-auto-rows: minmax(150px, auto);
+        gap: 18px;
+      }
+      .cell {
+        position: relative;
+        border-radius: var(--r);
+        border: 1px solid var(--line);
+        background: var(--bg-2);
+        padding: 30px;
+        overflow: hidden;
+        box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 20px 50px -34px rgba(20,20,45,0.35);
+        transition: transform 0.45s cubic-bezier(.2,.7,.2,1), box-shadow 0.45s ease;
+      }
+      .cell:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow);
+      }
+      .cell h3 {
+        margin: 0 0 10px;
+        font-size: 1.18rem;
+        letter-spacing: -0.02em;
+        font-weight: 650;
+      }
+      .cell p {
+        margin: 0;
+        color: var(--ink-soft);
+        font-size: 0.96rem;
+        line-height: 1.6;
+      }
+      .cell .num {
+        font-size: 0.74rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+        margin-bottom: 16px;
+        display: block;
+      }
+      .c-a { grid-column: span 3; grid-row: span 2; }
+      .c-b { grid-column: span 3; }
+      .c-c { grid-column: span 3; }
+      .c-d { grid-column: span 2; }
+      .c-e { grid-column: span 2; }
+      .c-f { grid-column: span 2; }
 
- label {
- display: block;
- margin-bottom: 10px;
- color: var(--muted);
- font-size: 0.95rem;
- }
+      .cell.feature {
+        color: #fff;
+        background:
+          radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,0.18), transparent 45%),
+          linear-gradient(150deg, #5b4bff 0%, #7c3bff 55%, #b14bff 100%);
+        border-color: transparent;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .cell.feature p { color: rgba(255,255,255,0.82); }
+      .cell.feature .num { color: rgba(255,255,255,0.6); }
+      .cell.feature .big {
+        font-size: clamp(2rem, 3.2vw, 2.9rem);
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+        font-weight: 750;
+        margin: 0;
+      }
+      .glow-orb {
+        position: absolute;
+        width: 180px; height: 180px;
+        right: -40px; bottom: -50px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255,255,255,0.35), transparent 65%);
+        filter: blur(4px);
+      }
+      .stat {
+        font-size: clamp(2.4rem, 5vw, 3.4rem);
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        background: linear-gradient(120deg, var(--accent), var(--accent-2));
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+        line-height: 1;
+        margin: 0 0 6px;
+      }
 
- textarea,
- input[type='text'],
- input[type='number'] {
- width: 100%;
- border: 1px solid rgba(118, 177, 255, 0.16);
- border-radius: 18px;
- background: rgba(7, 14, 29, 0.95);
- color: var(--text);
- font-size: 1rem;
- padding: 18px 18px;
- outline: none;
- transition: border-color 0.2s ease, box-shadow 0.2s ease;
- }
+      /* ---------- SEARCH PANEL ---------- */
+      .search-shell { padding: 12vh 0 6vh; }
+      .panel {
+        position: relative;
+        border-radius: 34px;
+        border: 1px solid var(--line-strong);
+        background: var(--glass);
+        backdrop-filter: blur(30px) saturate(1.4);
+        -webkit-backdrop-filter: blur(30px) saturate(1.4);
+        box-shadow: var(--shadow);
+        padding: clamp(30px, 5vw, 56px);
+      }
+      .panel-head { margin-bottom: 34px; }
+      .panel-head h2 {
+        margin: 0 0 10px;
+        font-size: clamp(1.9rem, 3.6vw, 2.8rem);
+        letter-spacing: -0.04em;
+        font-weight: 750;
+      }
+      .panel-head p { margin: 0; color: var(--ink-soft); font-size: 1rem; }
 
- textarea {
- min-height: 160px;
- resize: vertical;
- }
+      label {
+        display: block;
+        margin-bottom: 12px;
+        color: var(--ink);
+        font-size: 0.88rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      label .opt { color: var(--muted); font-weight: 400; }
 
- textarea:focus,
- input:focus {
- border-color: rgba(119, 214, 255, 0.5);
- box-shadow: 0 0 0 4px rgba(119, 214, 255, 0.08);
- }
+      textarea, input[type='text'], input[type='number'] {
+        width: 100%;
+        border: 1px solid var(--line-strong);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.7);
+        color: var(--ink);
+        font-family: var(--font);
+        font-size: 1rem;
+        padding: 18px 20px;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      }
+      textarea::placeholder, input::placeholder { color: var(--muted); }
+      textarea { min-height: 150px; resize: vertical; line-height: 1.6; }
+      textarea:focus, input:focus {
+        border-color: var(--accent);
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(91, 75, 255, 0.12);
+      }
 
- .field-grid {
- display: grid;
- gap: 18px;
- }
+      .grid { display: grid; gap: 22px; }
+      .grid.two { grid-template-columns: 1fr 1fr; }
+      .field { min-width: 0; }
+      .stack-mb { margin-bottom: 26px; }
 
- .field-grid .half {
- min-width: 0;
- }
+      .actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 18px 34px;
+        border: none;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+        color: #fff;
+        font-family: var(--font);
+        font-weight: 650;
+        font-size: 1.02rem;
+        letter-spacing: -0.01em;
+        cursor: pointer;
+        box-shadow: 0 18px 40px -14px rgba(91, 75, 255, 0.6);
+        transition: transform 0.25s cubic-bezier(.2,.7,.2,1), box-shadow 0.25s ease, filter 0.25s ease;
+      }
+      .btn:hover { transform: translateY(-2px); filter: brightness(1.05); box-shadow: 0 26px 60px -16px rgba(91, 75, 255, 0.7); }
+      .btn svg { transition: transform 0.25s ease; }
+      .btn:hover svg { transform: translateX(4px); }
 
- .field-grid.two {
- grid-template-columns: 1fr 1fr;
- }
+      .hint { color: var(--muted); font-size: 0.9rem; max-width: 320px; line-height: 1.5; }
+      .hint code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: rgba(12,13,18,0.06);
+        padding: 2px 7px;
+        border-radius: 6px;
+        font-size: 0.85em;
+      }
 
- .btn {
- display: inline-flex;
- align-items: center;
- justify-content: center;
- gap: 10px;
- padding: 16px 26px;
- border: none;
- border-radius: 999px;
- background: linear-gradient(135deg, #58c2ff 0%, #7b5cff 100%);
- color: #06152d;
- font-weight: 700;
- font-size: 1rem;
- cursor: pointer;
- box-shadow: 0 18px 40px rgba(95, 164, 255, 0.22);
- transition: transform 0.2s ease, box-shadow 0.2s ease;
- }
+      .error {
+        margin-bottom: 26px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 76, 76, 0.35);
+        background: rgba(255, 76, 76, 0.08);
+        color: #b3261e;
+        padding: 18px 22px;
+        font-size: 0.96rem;
+        font-weight: 500;
+      }
 
- .btn:hover {
- transform: translateY(-1px);
- box-shadow: 0 24px 60px rgba(95, 164, 255, 0.3);
- }
+      /* ---------- FOOTER ---------- */
+      footer {
+        position: relative;
+        z-index: 1;
+        margin-top: 12vh;
+        padding: 40px 0 50px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.86rem;
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
 
- .note {
- margin-top: 24px;
- color: var(--muted);
- font-size: 0.95rem;
- line-height: 1.7;
- }
+      /* ---------- SCROLL-DRIVEN REVEAL (progressive enhancement) ---------- */
+      @media (prefers-reduced-motion: no-preference) {
+        @supports (animation-timeline: view()) {
+          .reveal {
+            animation: reveal-in linear both;
+            animation-timeline: view();
+            animation-range: entry 0% cover 32%;
+          }
+          @keyframes reveal-in {
+            from { opacity: 0; transform: translateY(48px) scale(0.98); }
+            to   { opacity: 1; transform: none; }
+          }
+        }
+      }
 
- .footer {
- display: flex;
- align-items: center;
- justify-content: space-between;
- gap: 12px;
- margin-top: 20px;
- color: var(--muted);
- font-size: 0.95rem;
- }
+      @media (max-width: 900px) {
+        .bento { grid-template-columns: repeat(2, 1fr); }
+        .c-a, .c-b, .c-c, .c-d, .c-e, .c-f { grid-column: span 1; grid-row: auto; }
+        .c-a { grid-column: span 2; }
+      }
+      @media (max-width: 620px) {
+        .wrap { padding: 0 20px; }
+        .grid.two { grid-template-columns: 1fr; }
+        .bento { grid-template-columns: 1fr; }
+        .c-a { grid-column: span 1; }
+        .actions { flex-direction: column; align-items: stretch; }
+        .btn { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <nav class="nav">
+        <div class="brand"><span class="dot"></span> GITRadar</div>
+        <span class="pill">AI talent agent</span>
+      </nav>
 
- .chip {
- display: inline-flex;
- padding: 12px 18px;
- border-radius: 999px;
- background: rgba(47, 86, 196, 0.14);
- border: 1px solid rgba(119, 214, 255, 0.18);
- color: #9ed9ff;
- font-size: 0.85rem;
- }
+      <!-- HERO -->
+      <header class="hero">
+        <p class="eyebrow">Candidate search</p>
+        <h1 class="title"><span class="grad">GITRadar</span></h1>
+        <p class="lead">An LLM-powered talent-hunt agent that reads your job description, plans a focused GitHub search, and evaluates each developer's public work with AI reasoning — with a fast heuristic fallback when no model is configured.</p>
+        <a class="scroll-cue" href="#start">
+          <span class="track"></span> Scroll to search
+        </a>
+      </header>
 
- @media (max-width: 720px) {
- .field-grid.two {
- grid-template-columns: 1fr;
- }
- }
- </style>
- </head>
- <body>
- <div class="container">
- <section class="hero">
- <div>
- <p class="eyebrow">Candidate search</p>
- <h1>GitHub FutureScape</h1>
- <p class="lead">An LLM-powered talent-hunt agent that reads your job description, plans a focused GitHub search, and evaluates each developer's public work with AI reasoning — with a fast heuristic fallback when no model is configured.</p>
- </div>
- <div class="chip">AI agent</div>
- </section>
+      <!-- BENTO -->
+      <div class="section-label reveal">
+        <h2>A hiring co-pilot that thinks in commits, not keywords.</h2>
+        <p>Every module below runs automatically the moment you hit search.</p>
+      </div>
 
- {% if error %}
- <div class="panel" style="border-color:#ff7b7b;background:rgba(69,19,26,0.82);color:#ffe3e6;">
- {{ error }}
- </div>
- {% endif %}
+      <section class="bento">
+        <div class="cell feature c-a reveal">
+          <span class="num">01 — CORE</span>
+          <p class="big">Reads the role. Plans the hunt. Ranks real work.</p>
+          <p>The agent turns your requirements into a targeted GitHub query, then reasons over each candidate's public footprint.</p>
+          <span class="glow-orb"></span>
+        </div>
+        <div class="cell c-b reveal">
+          <span class="num">02 — SIGNAL</span>
+          <h3>Deep profile evaluation</h3>
+          <p>Bios, languages, repositories and activity are weighed together — not just a name match.</p>
+        </div>
+        <div class="cell c-c reveal">
+          <span class="num">03 — SPEED</span>
+          <h3>Heuristic fallback</h3>
+          <p>No model key? A keyword-overlap ranker keeps results instant and useful.</p>
+        </div>
+        <div class="cell c-d reveal">
+          <div class="stat">100+</div>
+          <p>profiles scanned per search</p>
+        </div>
+        <div class="cell c-e reveal">
+          <h3>Skill gaps</h3>
+          <p>See matched strengths and missing skills at a glance.</p>
+        </div>
+        <div class="cell c-f reveal">
+          <h3>Fit summary</h3>
+          <p>A plain-language reason each developer made the shortlist.</p>
+        </div>
+      </section>
 
- <form method="post" action="/search" class="panel">
- <div class="field-grid" style="margin-bottom:24px;">
- <div>
- <label><strong>Job requirements / keywords</strong></label>
- <textarea name="query" placeholder="e.g. Python backend Django REST API" required>{{ request.form.query or '' }}</textarea>
- </div>
- </div>
+      <!-- SEARCH -->
+      <section class="search-shell reveal" id="start">
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
 
- <div class="field-grid two" style="margin-bottom:24px;">
- <div class="half">
- <label>Location (optional)</label>
- <input type="text" name="location" placeholder="e.g. Berlin, Germany" value="{{ request.form.location or '' }}">
- </div>
- <div class="half">
- <label>Max results to show</label>
- <input type="number" name="max_results" value="10" min="1" max="100">
- </div>
- </div>
+        <form method="post" action="/search" class="panel">
+          <div class="panel-head">
+            <h2>Describe the developer you need.</h2>
+            <p>The more specific the requirements, the sharper the shortlist.</p>
+          </div>
 
- <div class="field-grid two" style="margin-bottom:24px;">
- <div class="half">
- <label>Search size (how many GitHub users to scan)</label>
- <input type="number" name="search_size" value="100" min="10" max="1000">
- </div>
- <div class="half" style="display:flex;flex-direction:column;justify-content:flex-end;">
- <button class="btn" type="submit">Search GitHub</button>
- </div>
- </div>
+          <div class="stack-mb">
+            <label>Job requirements / keywords</label>
+            <textarea name="query" placeholder="e.g. Python backend Django REST API" required>{{ request.form.query or '' }}</textarea>
+          </div>
 
- <div class="footer">
- <span>Hover over results for instant ranking insight.</span>
- <span>Tip: Add a valid GITHUB_TOKEN in <code>.env</code> for faster API access.</span>
- </div>
- </form>
- </div>
- </body>
+          <div class="grid two stack-mb">
+            <div class="field">
+              <label>Location <span class="opt">(optional)</span></label>
+              <input type="text" name="location" placeholder="e.g. Berlin, Germany" value="{{ request.form.location or '' }}">
+            </div>
+            <div class="field">
+              <label>Max results to show</label>
+              <input type="number" name="max_results" value="10" min="1" max="100">
+            </div>
+          </div>
+
+          <div class="grid two stack-mb">
+            <div class="field">
+              <label>Search size <span class="opt">(GitHub users to scan)</span></label>
+              <input type="number" name="search_size" value="100" min="10" max="1000">
+            </div>
+            <div class="field" style="display:flex;align-items:flex-end;">
+              <button class="btn" type="submit" style="width:100%;">
+                Search GitHub
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="actions">
+            <span class="hint">Hover any result for instant ranking insight.</span>
+            <span class="hint">Tip: add a valid <code>GITHUB_TOKEN</code> in <code>.env</code> for faster API access.</span>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <footer class="wrap">
+      <span>GitHub GITRadar — LLM-powered talent hunt.</span>
+      <span>Built for recruiters who read code.</span>
+    </footer>
+  </body>
 </html>

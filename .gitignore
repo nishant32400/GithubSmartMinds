@@ -27,3 +27,7 @@ env/
 *.egg-info/
 dist/
 build/
+
+ec2-key.pem
+
+.generated_technical_document.py
