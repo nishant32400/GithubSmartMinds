@@ -56,6 +56,7 @@ gracefully to the heuristic when no model is configured.
    ```
 
 4. Open <http://127.0.0.1:8000>.
+5. Its Deployed on AWS you can Always refer: <http://54.234.45.179>.
 
 For production, use gunicorn: `gunicorn -c gunicorn.conf.py wsgi:app`.
 
