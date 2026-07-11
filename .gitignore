@@ -29,3 +29,8 @@ dist/
 build/
 
 ec2-key.pem
+.backend/generate_technical_document.py
+.backend/env
+.backend/GitHub_talent_hunt_Report.pdf
+
+docs/
