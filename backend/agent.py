@@ -154,7 +154,19 @@ class TalentHuntAgent:
         top_n = max(1, top_n)
         eval_count = min(len(prelim), max(top_n, config.LLM_EVAL_TOP_K))
         to_eval = prelim[:eval_count]
-        max_heuristic = max((c.get("heuristic_score", 0) for c in to_eval), default=0) or 1
+
+        # Achievements live only on the profile HTML page, so fetch them for the
+        # shortlist (not the whole scanned pool) to keep the extra requests bounded.
+        if config.FETCH_ACHIEVEMENTS:
+            self._attach_achievements(to_eval)
+
+        # Fold the achievement signal into the raw heuristic BEFORE normalizing so
+        # the final score stays within 0-100 (no more 103) while decorated and
+        # high-reach profiles still separate from bare ones.
+        for c in to_eval:
+            c["achievement_bonus"] = self._achievement_bonus(c)
+            c["combined_heuristic"] = (c.get("heuristic_score") or 0) + c["achievement_bonus"]
+        max_heuristic = max((c["combined_heuristic"] for c in to_eval), default=0) or 1
 
         if self.llm.is_available():
             self._evaluate_with_llm(to_eval, requirements, plan, max_heuristic)
@@ -165,8 +177,35 @@ class TalentHuntAgent:
         to_eval.sort(key=lambda c: c.get("score", 0), reverse=True)
         return to_eval[:top_n]
 
+    def _attach_achievements(self, candidates):
+        """Fetch GitHub achievement badges for the shortlist in parallel."""
+        workers = max(1, min(config.SCRAPER_MAX_WORKERS, len(candidates)))
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            futures = {
+                ex.submit(self.scraper.fetch_achievements, c.get("username")): c
+                for c in candidates if c.get("username")
+            }
+            for fut in as_completed(futures):
+                candidate = futures[fut]
+                try:
+                    candidate["achievements"] = fut.result()
+                except Exception as exc:  # never let scraping crash a run
+                    logger.info("Achievements failed for %s: %s",
+                                candidate.get("username"), exc)
+                    candidate["achievements"] = []
+
+    @staticmethod
+    def _achievement_bonus(candidate):
+        """Raw achievement signal (0-3), ~= one matched skill at most.
+
+        Added to the raw heuristic before normalization, so it nudges ordering
+        without letting badges override role relevance.
+        """
+        total_tier = sum(a.get("tier", 1) for a in candidate.get("achievements") or [])
+        return round(min(total_tier, 12) * 0.25, 2)
+
     def _evaluate_with_llm(self, candidates, requirements, plan, max_heuristic):
-        workers = max(1, min(4, len(candidates)))
+        workers = max(1, min(config.LLM_MAX_CONCURRENCY, len(candidates)))
         with ThreadPoolExecutor(max_workers=workers) as ex:
             futures = {
                 ex.submit(self._eval_one, c, requirements, plan, max_heuristic): c
@@ -194,9 +233,9 @@ class TalentHuntAgent:
             '  "summary": "<<=2 sentences on fit, citing repos/skills>"\n'
             "}"
         )
-        data = self.llm.complete_json(_EVAL_SYSTEM, user_prompt)
+        data = self.llm.complete_json(_EVAL_SYSTEM, user_prompt, max_tokens=config.LLM_EVAL_MAX_TOKENS)
         llm_score = _clamp_int(data.get("fit_score"), 0, 100, default=0)
-        heuristic_norm = 100.0 * candidate.get("heuristic_score", 0) / max_heuristic
+        heuristic_norm = 100.0 * candidate.get("combined_heuristic", 0) / max_heuristic
         combined = round(0.75 * llm_score + 0.25 * heuristic_norm, 2)
 
         candidate["llm_score"] = llm_score
@@ -214,7 +253,7 @@ class TalentHuntAgent:
         candidate["matched_skills"] = matched
         candidate["missing_skills"] = []
         candidate["evaluated_by"] = "heuristic"
-        candidate["score"] = round(100.0 * candidate.get("heuristic_score", 0) / max_heuristic, 2)
+        candidate["score"] = round(100.0 * candidate.get("combined_heuristic", 0) / max_heuristic, 2)
         if matched:
             candidate["fit_summary"] = "Strong keyword overlap on " + ", ".join(matched[:5]) + "."
         else:
@@ -222,7 +261,7 @@ class TalentHuntAgent:
 
 
 # -- module helpers --------------------------------------------------------
-def _compact_candidate(profile, max_repos=8):
+def _compact_candidate(profile, max_repos=5):
     """Trim a profile to the few fields the LLM needs (controls token cost)."""
     repos = []
     for r in (profile.get("repos") or [])[:max_repos]:
@@ -230,7 +269,7 @@ def _compact_candidate(profile, max_repos=8):
             "name": r.get("name"),
             "language": r.get("language"),
             "stars": r.get("stargazers_count", 0),
-            "description": (r.get("description") or "")[:160],
+            "description": (r.get("description") or "")[:120],
         })
     return {
         "username": profile.get("username"),

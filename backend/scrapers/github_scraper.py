@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import time
 
 import requests
@@ -32,6 +33,15 @@ class GitHubNotFoundError(GitHubError):
 
 class GitHubScraper:
     BASE = "https://api.github.com"
+    WEB = "https://github.com"
+
+    # GitHub achievements are rendered as badge images on the profile HTML page
+    # and exposed by neither the REST nor GraphQL API, so we read them from the
+    # page. Match the badge's alt text ("Achievement: Pull Shark") and, as a
+    # fallback, the achievement slug inside the badge asset URL.
+    _ACHIEVEMENT_ALT_RE = re.compile(r'alt="Achievement:\s*([^"]+?)"', re.IGNORECASE)
+    _ACHIEVEMENT_SLUG_RE = re.compile(r'/images/modules/profile/achievements/([a-z0-9-]+?)-default', re.IGNORECASE)
+    _ACHIEVEMENT_TIER_RE = re.compile(r'\bx(\d+)\b')
 
     def __init__(self, token=None, per_page=30, timeout=15, max_retries=3):
         token = token or (config.GITHUB_TOKEN if config else os.getenv('GITHUB_TOKEN'))
@@ -213,3 +223,48 @@ class GitHubScraper:
             'repos': repos
         }
         return profile
+
+    def fetch_achievements(self, username):
+        """Best-effort scrape of a user's GitHub achievement badges.
+
+        Achievements (Pull Shark, Starstruck, Galaxy Brain, ...) are not in the
+        REST or GraphQL API, so we read the public profile HTML. Returns a list
+        of ``{"name": str, "tier": int}`` (``tier`` is the badge multiplier,
+        e.g. Pull Shark x2 -> 2). On any failure returns ``[]`` so it never
+        breaks profile building or ranking. Markup-dependent; if GitHub changes
+        the achievements section the regexes may need updating.
+        """
+        url = f"{self.WEB}/{username}?tab=achievements"
+        try:
+            resp = self.session.get(
+                url,
+                headers={'Accept': 'text/html'},
+                timeout=self.timeout,
+            )
+        except requests.RequestException as exc:
+            logger.info('Achievements fetch failed for %s: %s', username, exc)
+            return []
+        if resp.status_code != 200:
+            return []
+        return self._parse_achievements(resp.text)
+
+    @classmethod
+    def _parse_achievements(cls, html):
+        """Extract deduplicated achievements from profile-page HTML."""
+        names = cls._ACHIEVEMENT_ALT_RE.findall(html)
+        if not names:
+            # Fallback: derive a display name from the badge asset slug.
+            names = [slug.replace('-', ' ').title()
+                     for slug in cls._ACHIEVEMENT_SLUG_RE.findall(html)]
+        achievements = []
+        seen = set()
+        for raw in names:
+            tier_match = cls._ACHIEVEMENT_TIER_RE.search(raw)
+            tier = int(tier_match.group(1)) if tier_match else 1
+            name = cls._ACHIEVEMENT_TIER_RE.sub('', raw).strip(' -x').strip()
+            key = name.lower()
+            if not name or key in seen:
+                continue
+            seen.add(key)
+            achievements.append({'name': name, 'tier': tier})
+        return achievements

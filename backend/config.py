@@ -19,6 +19,14 @@ def _int(name: str, default: int) -> int:
         return default
 
 
+def _bool(name: str, default: bool) -> bool:
+    """Read a boolean env var (``1/true/yes/on``), falling back to ``default``."""
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("1", "true", "yes", "on")
+
+
 def _clean(value: str) -> str:
     return (value or "").strip()
 
@@ -41,6 +49,9 @@ class Config:
     MAX_RESULTS = _int("MAX_RESULTS", 50)
     MAX_REPOS_PER_USER = _int("MAX_REPOS_PER_USER", 20)
     SCRAPER_MAX_WORKERS = max(1, _int("SCRAPER_MAX_WORKERS", 8))
+    # Achievements are only on the profile HTML page (no API), so we scrape them
+    # for the shortlist only. Disable to skip the extra HTML requests entirely.
+    FETCH_ACHIEVEMENTS = _bool("FETCH_ACHIEVEMENTS", True)
 
     # --- Rate limiting ---
     RATELIMIT_STORAGE_URI = _clean(os.getenv("RATELIMIT_STORAGE_URI", "memory://"))
@@ -50,9 +61,23 @@ class Config:
     # --- LLM ---
     LLM_PROVIDER = _clean(os.getenv("LLM_PROVIDER", "none")).lower()
     LLM_EVAL_TOP_K = _int("LLM_EVAL_TOP_K", 12)
+    # Parallel LLM eval calls. Keep low on token-per-minute-limited tiers (e.g.
+    # Groq free = 8000 TPM) so a burst of evals doesn't trip 429 rate limits.
+    LLM_MAX_CONCURRENCY = max(1, _int("LLM_MAX_CONCURRENCY", 2))
+    # SDK-level retries; the client honors the provider's Retry-After header, so
+    # a few retries let calls recover from transient per-minute rate limits.
+    LLM_MAX_RETRIES = max(0, _int("LLM_MAX_RETRIES", 5))
+    # Output-token ceiling for a single evaluation (input+output count toward TPM).
+    LLM_EVAL_MAX_TOKENS = _int("LLM_EVAL_MAX_TOKENS", 500)
     OPENAI_API_KEY = _clean(os.getenv("OPENAI_API_KEY", "")) or None
     OPENAI_MODEL = _clean(os.getenv("OPENAI_MODEL", "gpt-4o-mini"))
     OPENAI_BASE_URL = _clean(os.getenv("OPENAI_BASE_URL", "")) or None
+    # Groq (OpenAI-compatible API; serves gpt-oss and other open models).
+    GROQ_API_KEY = _clean(os.getenv("GROQ_API_KEY", "")) or None
+    GROQ_MODEL = _clean(os.getenv("GROQ_MODEL", "openai/gpt-oss-20b"))
+    GROQ_BASE_URL = _clean(os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1"))
+    # gpt-oss is a reasoning model; keep reasoning terse so JSON isn't truncated.
+    GROQ_REASONING_EFFORT = _clean(os.getenv("GROQ_REASONING_EFFORT", "low")).lower() or None
     AWS_REGION = _clean(os.getenv("AWS_REGION", "us-east-1"))
     BEDROCK_MODEL_ID = _clean(
         os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0")

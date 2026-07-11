@@ -387,6 +387,68 @@
         flex-wrap: wrap;
       }
 
+      /* ---------- SEARCH HISTORY SIDEBAR (CSS-only, no JS) ---------- */
+      .hist-toggle { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
+      .nav-actions { display: flex; align-items: center; gap: 12px; }
+      .hist-open {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 9px 16px; border-radius: 999px;
+        border: 1px solid var(--line-strong); background: var(--glass);
+        backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+        color: var(--ink); font-weight: 600; font-size: 0.82rem; cursor: pointer;
+        font-family: var(--font);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .hist-open:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+      .sidebar-overlay {
+        position: fixed; inset: 0; z-index: 60;
+        background: rgba(12, 13, 18, 0.42);
+        opacity: 0; visibility: hidden; transition: opacity 0.3s ease;
+      }
+      .sidebar {
+        position: fixed; top: 0; left: 0; bottom: 0; z-index: 61;
+        width: 340px; max-width: 88vw;
+        background: var(--bg-2); border-right: 1px solid var(--line-strong);
+        box-shadow: var(--shadow);
+        transform: translateX(-102%);
+        transition: transform 0.38s cubic-bezier(.2,.7,.2,1);
+        display: flex; flex-direction: column;
+      }
+      .hist-toggle:checked ~ .sidebar-overlay { opacity: 1; visibility: visible; }
+      .hist-toggle:checked ~ .sidebar { transform: none; }
+      .sidebar-head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 22px 22px 16px; border-bottom: 1px solid var(--line);
+      }
+      .sidebar-head h2 { margin: 0; font-size: 1.05rem; font-weight: 700; letter-spacing: -0.02em; }
+      .sidebar-close {
+        font-size: 1.4rem; line-height: 1; color: var(--muted); cursor: pointer;
+        width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 10px; border: 1px solid var(--line);
+      }
+      .sidebar-close:hover { color: var(--ink); background: rgba(12, 13, 18, 0.05); }
+      .hist-list { list-style: none; margin: 0; padding: 12px; overflow-y: auto; flex: 1; }
+      .hist-list li { margin-bottom: 8px; }
+      .hist-item { margin: 0; }
+      .hist-item button {
+        width: 100%; text-align: left; cursor: pointer;
+        border: 1px solid var(--line); border-radius: 14px;
+        background: var(--bg); padding: 12px 14px;
+        font-family: var(--font); color: var(--ink);
+        display: flex; flex-direction: column; gap: 4px;
+        transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .hist-item button:hover {
+        border-color: var(--accent); transform: translateX(2px);
+        box-shadow: 0 10px 26px -18px rgba(91, 75, 255, 0.6);
+      }
+      .hist-q {
+        font-weight: 600; font-size: 0.92rem; letter-spacing: -0.01em;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .hist-meta { color: var(--muted); font-size: 0.76rem; }
+      .hist-empty { color: var(--muted); font-size: 0.9rem; padding: 24px 22px; }
+
       /* ---------- SCROLL-DRIVEN REVEAL (progressive enhancement) ---------- */
       @media (prefers-reduced-motion: no-preference) {
         @supports (animation-timeline: view()) {
@@ -418,10 +480,45 @@
     </style>
   </head>
   <body>
+    <input type="checkbox" id="hist-toggle" class="hist-toggle">
+    <label for="hist-toggle" class="sidebar-overlay"></label>
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <h2>Recent searches</h2>
+        <label for="hist-toggle" class="sidebar-close" title="Close">&times;</label>
+      </div>
+      {% if history %}
+      <ul class="hist-list">
+        {% for h in history %}
+        <li>
+          <form method="post" action="/search" class="hist-item">
+            <input type="hidden" name="query" value="{{ h.query }}">
+            <input type="hidden" name="location" value="{{ h.location or '' }}">
+            <input type="hidden" name="max_results" value="{{ h.max_results }}">
+            <input type="hidden" name="search_size" value="{{ h.search_size }}">
+            <button type="submit">
+              <span class="hist-q">{{ h.query }}</span>
+              <span class="hist-meta">{% if h.location %}{{ h.location }} · {% endif %}{{ h.count }} found · {{ h.ts }}</span>
+            </button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="hist-empty">No searches yet. Your recent searches will appear here.</p>
+      {% endif %}
+    </aside>
+
     <div class="wrap">
       <nav class="nav">
         <div class="brand"><span class="dot"></span> GITRadar</div>
-        <span class="pill">AI talent agent</span>
+        <div class="nav-actions">
+          <label for="hist-toggle" class="hist-open">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+            History
+          </label>
+          <span class="pill">AI talent agent</span>
+        </div>
       </nav>
 
       <!-- HERO -->

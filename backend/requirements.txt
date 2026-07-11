@@ -8,7 +8,9 @@ requests==2.32.3
 python-dotenv==1.0.1
 
 # --- LLM providers (optional at runtime; app degrades to heuristic if unset) ---
-openai==1.51.2
+# openai>=1.55.3 is required for httpx>=0.28 compatibility. Also used for Groq's
+# OpenAI-compatible API (LLM_PROVIDER=groq).
+openai==2.45.0
 boto3==1.35.36
 
 # --- Reporting ---

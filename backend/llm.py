@@ -1,7 +1,8 @@
 """Provider-agnostic LLM client.
 
-Supports two backends, selected by ``LLM_PROVIDER``:
+Supports three backends, selected by ``LLM_PROVIDER``:
   * ``openai``  - OpenAI (or any OpenAI-compatible endpoint via OPENAI_BASE_URL)
+  * ``groq``    - Groq's OpenAI-compatible API (serves gpt-oss and other models)
   * ``bedrock`` - AWS Bedrock (Anthropic Claude messages API)
 
 The client is intentionally tiny and dependency-light. If the provider is
@@ -34,25 +35,40 @@ class LLMClient:
     # -- setup -------------------------------------------------------------
     def _initialize(self):
         if self.provider == "openai":
-            self._init_openai()
+            self._client = self._init_openai_compatible(
+                config.OPENAI_API_KEY, config.OPENAI_BASE_URL, "OPENAI_API_KEY")
+        elif self.provider == "groq":
+            self._client = self._init_openai_compatible(
+                config.GROQ_API_KEY, config.GROQ_BASE_URL, "GROQ_API_KEY")
         elif self.provider == "bedrock":
             self._init_bedrock()
         else:
             self._init_error = "LLM provider disabled (LLM_PROVIDER=none)"
 
-    def _init_openai(self):
-        if not config.OPENAI_API_KEY:
-            self._init_error = "OPENAI_API_KEY is not set"
-            return
+    def _init_openai_compatible(self, api_key, base_url, key_name):
+        """Build an OpenAI SDK client for any OpenAI-compatible endpoint.
+
+        Returns the client, or ``None`` (recording ``_init_error``) so the app
+        degrades to the heuristic ranker instead of raising at startup.
+        """
+        if not api_key:
+            self._init_error = f"{key_name} is not set"
+            return None
         try:
             from openai import OpenAI
         except ImportError:
             self._init_error = "openai package is not installed"
-            return
-        kwargs = {"api_key": config.OPENAI_API_KEY, "timeout": _REQUEST_TIMEOUT}
-        if config.OPENAI_BASE_URL:
-            kwargs["base_url"] = config.OPENAI_BASE_URL
-        self._client = OpenAI(**kwargs)
+            return None
+        kwargs = {
+            "api_key": api_key,
+            "timeout": _REQUEST_TIMEOUT,
+            # The SDK honors the provider's Retry-After header, so retries let
+            # calls ride out transient per-minute (TPM/RPM) rate limits.
+            "max_retries": config.LLM_MAX_RETRIES,
+        }
+        if base_url:
+            kwargs["base_url"] = base_url
+        return OpenAI(**kwargs)
 
     def _init_bedrock(self):
         try:
@@ -78,6 +94,8 @@ class LLMClient:
     def model_name(self):
         if self.provider == "openai":
             return config.OPENAI_MODEL
+        if self.provider == "groq":
+            return config.GROQ_MODEL
         if self.provider == "bedrock":
             return config.BEDROCK_MODEL_ID
         return "none"
@@ -100,7 +118,7 @@ class LLMClient:
         if not self.is_available():
             raise LLMUnavailable(self._init_error or "LLM is not available")
         try:
-            if self.provider == "openai":
+            if self.provider in ("openai", "groq"):
                 return self._openai_complete(system, user, max_tokens, temperature, json_mode)
             if self.provider == "bedrock":
                 return self._bedrock_complete(system, user, max_tokens, temperature)
@@ -113,7 +131,7 @@ class LLMClient:
 
     def _openai_complete(self, system, user, max_tokens, temperature, json_mode):
         kwargs = {
-            "model": config.OPENAI_MODEL,
+            "model": self.model_name,
             "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
@@ -123,6 +141,10 @@ class LLMClient:
         }
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
+        # gpt-oss on Groq is a reasoning model; cap the reasoning budget so the
+        # hidden chain-of-thought doesn't eat into max_tokens and truncate JSON.
+        if self.provider == "groq" and config.GROQ_REASONING_EFFORT:
+            kwargs["extra_body"] = {"reasoning_effort": config.GROQ_REASONING_EFFORT}
         resp = self._client.chat.completions.create(**kwargs)
         return resp.choices[0].message.content or ""
 
